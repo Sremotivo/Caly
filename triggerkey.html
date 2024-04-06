@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caly</title>
+    <link rel="shortcut icon" type="image/jpg" href="assets\images\caly.png" />
+    <link rel="stylesheet" href="/keytrigger.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #14121B;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #00ea3d;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            button#copyMaskButton {
+                padding: 10px 48px; /* Ajuste o tamanho deste botão */
+            }
+
+                button#copyMaskButton:hover {
+                    background-color: #00ea3d;
+                }
+
+            button[type="submit"] {
+                padding: 10px 20px; /* Mantenha o tamanho do botão "Gerar Licença" */
+            }
+
+                button[type="submit"]:hover {
+                    background-color: #00ea3d;
+                }
+
+        .message {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+            .message.success {
+                color: #4caf50;
+            }
+
+            .message.error {
+                color: #f44336;
+            }
+
+        .notification {
+            display: none;
+            background-color: #f44336;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+            .notification.show {
+                display: block;
+            }
+
+        #generateButton {
+            margin-bottom: 10px; /* Adiciona uma margem inferior de 10 pixels */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Obrigado por contribuir!!</h2>
+        <form id="licenseForm">
+            <label for="keyMask">Key:</label>
+            <div class="key-mask-container">
+                <input type="text" id="keyMask" name="keyMask" required>
+                <button type="button" id="copyMaskButton">Copiar Key</button>
+            </div>
+            <button type="submit" id="generateButton">Gerar key</button>
+        </form>
+        <div class="notification" id="notification">key já foi gerada.</div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        var chaveGerada = false;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            addRandomCharacters();
+        });
+
+        document.getElementById('licenseForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            if (!chaveGerada) {
+                var sellerKey = '516fadb2eaa4f8986c49a6a68e21beb2';
+                var keyMask = document.getElementById('keyMask').value;
+
+                var keySuffix = keyMask.replace("TRG-", "");
+
+                genLicense(sellerKey, keySuffix);
+
+                chaveGerada = true;
+            } else {
+                showNotification("key já foi gerada.");
+            }
+        });
+
+        document.getElementById('copyMaskButton').addEventListener('click', function () {
+            copyKeyMask();
+        });
+
+        function genLicense(sellerKey, keyMask) {
+            var xhr = new XMLHttpRequest();
+            var url = "https://keyauth.win/api/seller/?sellerkey=" + sellerKey + "&type=add&expiry=1&mask=" + keyMask + "&level=1&amount=1&format=json";
+
+            xhr.open("POST", url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    var licenseKey = response.keys[0].key;
+                    console.log(licenseKey);
+                    copyToClipboard(licenseKey);
+                }
+            };
+            xhr.send();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function () {
+                showMessage("Key copiada.", "success");
+            }, function (err) {
+                console.error('Erro ao copiar: ', err);
+                showMessage("Ocorreu um erro ao copiar a chave.", "error");
+            });
+        }
+
+        function copyKeyMask() {
+            var keyMaskInput = document.getElementById('keyMask');
+            keyMaskInput.select();
+            document.execCommand('copy');
+            showMessage('Key copiada.', 'success');
+        }
+
+        function showMessage(message, type) {
+            var messageElement = document.getElementById('message');
+            messageElement.innerText = message;
+            messageElement.className = "message " + type;
+            setTimeout(function () {
+                messageElement.innerText = "";
+                messageElement.className = "message";
+            }, 3000);
+        }
+
+        function addRandomCharacters() {
+            var keyMaskInput = document.getElementById('keyMask');
+            var randomCharacters = '';
+            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            for (var i = 0; i < 10; i++) {
+                randomCharacters += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            keyMaskInput.value = "TRG-" + randomCharacters;
+        }
+
+        function showNotification(message) {
+            var notificationElement = document.getElementById('notification');
+            notificationElement.innerText = message;
+            notificationElement.classList.add('show');
+
+            setTimeout(function () {
+                notificationElement.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
